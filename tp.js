@@ -13,6 +13,8 @@ var userConfig = {
  *
  * @param  {str}                    _url                target url
  * @param  {func}                   _cb                 callback
+ * @param  {bool}                   secure              http or https
+ *
  * @return {void}
  */
 function apiGet( _url, _cb, secure )
@@ -51,10 +53,117 @@ function apiGet( _url, _cb, secure )
 }
 
 
-function buildBuyList( weapons, runesByName )
+function buildWeaponList( weapons, sigilsByName )
 {
-    var rune, buyList = [];
+    var sigil, weaponListList = [];
+    console.log( '\nWeapons:' );
+    for ( var i = 0, lenI = weapons.length; i < lenI; i++ ) 
+    {
+        sigil = sigilsByName[ weapons[ i ].name.split( ' of ' )[ 1 ] ];
+    
+        for ( prop in sigil )
+        {
+            if ( prop === 'min_sale_unit_price' )
+            {
+                var diff = sigil[ 'min_sale_unit_price' ] - weapons[ i ][ 'min_sale_unit_price' ];
 
+                if ( diff > userConfig.diffMinEcto && weapons[ i ][ 'min_sale_unit_price' ] !== 0  )  
+                {
+                    var message = weapons[ i ].name + ' ' + sigil[ 'min_sale_unit_price' ] + ' ' + weapons[ i ][ 'min_sale_unit_price' ];
+                    if ( diff < userConfig.diffMin )
+                    {
+                        message += ' (sell ecto)';
+                    }
+                    console.log( message );
+                    weaponListList.push( weapons[ i ] );
+                }
+            }
+        }
+    }
+    if ( weaponListList.length < 1 )
+    {
+        console.log( 'nothing in range right now' );   
+    }
+
+    // console.log( weaponListList ); // full list object
+}
+
+
+function getsigils( weapons, sigilNames )
+{
+    var url = 'http://www.gw2spidy.com/api/v0.9/json/all-items/17';
+
+    apiGet( url, function( info )
+    {
+        var sigil, sigils = {};
+
+        for ( result in info )
+        {
+            if ( typeof info[ result ] === 'object' )
+            {
+                var obj = info[ result ];
+
+                for ( var i = 0, lenI = obj.length; i < lenI; i++ ) 
+                {
+                    var item    = obj[ i ];
+                    var name    = item.name.split( ' of ' )[ 1 ];
+
+                    if ( item.name.indexOf( 'Superior Sigil' ) !== -1 &&
+                        sigilNames.indexOf( name ) !== -1  )
+                    {
+                        sigils[ name ] = item;
+                    }
+                }
+            }
+        }
+
+        buildWeaponList( weapons, sigils );
+    } );
+}
+
+
+function getWeapons()
+{
+    var url = 'http://www.gw2spidy.com/api/v0.9/json/all-items/18';
+    apiGet( url, function( info )
+    {
+        var sigil, items = [], sigils = [];
+
+        for ( result in info )
+        {
+            if ( typeof info[ result ] === 'object' )
+            {
+                var obj = info[ result ];
+
+                for ( var i = 0, lenI = obj.length; i < lenI; i++ ) 
+                {
+                    var item = obj[ i ];
+
+                    if ( item.rarity === 5 && item.name.indexOf( ' of ' ) !== -1 )
+                    {
+                        sigil = item.name.split( ' of ' )[ 1 ];
+                        sigils.push( sigil );
+                        items.push( item );
+                    }
+                }
+            }
+        }
+
+        getsigils( items, sigils );
+    } );
+}
+
+getWeapons();
+
+/* *******************************************************************/
+
+
+
+
+function buildArmorList( weapons, runesByName )
+{
+    var rune, armorList = [];
+    console.log( '\nArmor:' );
     for ( var i = 0, lenI = weapons.length; i < lenI; i++ ) 
     {
         rune = runesByName[ weapons[ i ].name.split( ' of ' )[ 1 ] ];
@@ -73,17 +182,17 @@ function buildBuyList( weapons, runesByName )
                         message += ' (sell ecto)';
                     }
                     console.log( message );
-                    buyList.push( weapons[ i ] );
+                    armorList.push( weapons[ i ] );
                 }
             }
         }
     }
-    if ( buyList.length < 1 )
+    if ( armorList.length < 1 )
     {
         console.log( 'nothing in range right now' );   
     }
 
-    // console.log( buyList ); // full list object
+    // console.log( armorList ); // full list object
 }
 
 
@@ -106,7 +215,7 @@ function getRunes( weapons, runeNames )
                     var item    = obj[ i ];
                     var name    = item.name.split( ' of ' )[ 1 ];
 
-                    if ( item.name.indexOf( 'Superior Sigil' ) !== -1 &&
+                    if ( item.name.indexOf( 'Superior Rune' ) !== -1 &&
                         runeNames.indexOf( name ) !== -1  )
                     {
                         runes[ name ] = item;
@@ -115,14 +224,14 @@ function getRunes( weapons, runeNames )
             }
         }
 
-        buildBuyList( weapons, runes );
+        buildArmorList( weapons, runes );
     } );
 }
 
 
-function getWeapons()
+function getArmor()
 {
-    var url = 'http://www.gw2spidy.com/api/v0.9/json/all-items/18';
+    var url = 'http://www.gw2spidy.com/api/v0.9/json/all-items/0';
     apiGet( url, function( info )
     {
         var rune, items = [], runes = [];
@@ -151,6 +260,6 @@ function getWeapons()
     } );
 }
 
-getWeapons();
+getArmor();
 
 
