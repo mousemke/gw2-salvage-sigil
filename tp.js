@@ -5,6 +5,18 @@ var userConfig = {
     diffMin     : 12500
 };
 
+function decToGSC( price )
+{
+    var g, s, c;
+    price = price.toString();
+
+    c = price.slice( price.length - 2 ) + 'c';
+    s = price.slice( price.length - 4, price.length - 2 ) + 's ';
+    g = price.slice( 0, price.length - 4 ) + 'g ';
+
+    return g + s + c;
+}
+
 
 /**
  * API get
@@ -56,7 +68,7 @@ function apiGet( _url, _cb, secure )
 function buildWeaponList( weapons, sigilsByName )
 {
     var sigil, weaponListList = [];
-    console.log( '\nWeapons:' );
+    console.log( '+++++++++++++++++  Weapons  +++++++++++++++++' );
     for ( var i = 0, lenI = weapons.length; i < lenI; i++ ) 
     {
         sigil = sigilsByName[ weapons[ i ].name.split( ' of ' )[ 1 ] ];
@@ -69,11 +81,14 @@ function buildWeaponList( weapons, sigilsByName )
 
                 if ( diff > userConfig.diffMinEcto && weapons[ i ][ 'min_sale_unit_price' ] !== 0  )  
                 {
-                    var message = weapons[ i ].name + ' ' + sigil[ 'min_sale_unit_price' ] + ' ' + weapons[ i ][ 'min_sale_unit_price' ];
+                    var message = weapons[ i ].name + '\nSigil: ' + decToGSC( sigil[ 'min_sale_unit_price' ] ) 
+                                    + '   ||  Weapon: ' + decToGSC( weapons[ i ][ 'min_sale_unit_price' ] );
                     if ( diff < userConfig.diffMin )
                     {
                         message += ' (sell ecto)';
                     }
+                    message += '\n';
+
                     console.log( message );
                     weaponListList.push( weapons[ i ] );
                 }
@@ -160,29 +175,32 @@ getWeapons();
 
 
 
-function buildArmorList( weapons, runesByName )
+function buildArmorList( armor, runesByName )
 {
     var rune, armorList = [];
-    console.log( '\nArmor:' );
-    for ( var i = 0, lenI = weapons.length; i < lenI; i++ ) 
+    console.log( '+++++++++++++++++  Armor  ++++++++++++++++++' );
+    for ( var i = 0, lenI = armor.length; i < lenI; i++ ) 
     {
-        rune = runesByName[ weapons[ i ].name.split( ' of ' )[ 1 ] ];
+        rune = runesByName[ armor[ i ].name.split( ' of ' )[ 1 ] ];
 
         for ( prop in rune )
         {
             if ( prop === 'min_sale_unit_price' )
             {
-                var diff = rune[ 'min_sale_unit_price' ] - weapons[ i ][ 'min_sale_unit_price' ];
+                var diff = rune[ 'min_sale_unit_price' ] - armor[ i ][ 'min_sale_unit_price' ];
 
-                if ( diff > userConfig.diffMinEcto && weapons[ i ][ 'min_sale_unit_price' ] !== 0  )  
+                if ( diff > userConfig.diffMinEcto && armor[ i ][ 'min_sale_unit_price' ] !== 0  )  
                 {
-                    var message = weapons[ i ].name + ' ' + rune[ 'min_sale_unit_price' ] + ' ' + weapons[ i ][ 'min_sale_unit_price' ];
+                    var message = armor[ i ].name + '\nrune: ' + decToGSC( rune[ 'min_sale_unit_price' ] ) 
+                                + '   ||  Armor: ' + decToGSC( armor[ i ][ 'min_sale_unit_price' ] );
                     if ( diff < userConfig.diffMin )
                     {
                         message += ' (sell ecto)';
                     }
+
+                    message += '\n';
                     console.log( message );
-                    armorList.push( weapons[ i ] );
+                    armorList.push( armor[ i ] );
                 }
             }
         }
