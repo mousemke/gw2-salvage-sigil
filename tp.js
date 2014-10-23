@@ -1,20 +1,42 @@
 var http        = require( 'http' );
 
 var userConfig = {
-    diffMinEcto : 7500, // 75s + ecto? = free dark matter
-    diffMin     : 12500
+    ectoPrice   : 4000, 
+    diffMin     : 0.15
 };
 
 function decToGSC( price )
 {
-    var g, s, c;
+    var g, s, c, negative = '';
     price = price.toString();
 
-    c = price.slice( price.length - 2 ) + 'c';
-    s = price.slice( price.length - 4, price.length - 2 ) + 's ';
-    g = price.slice( 0, price.length - 4 ) + 'g ';
+    if ( price[ 0 ] === '-' )
+    {
+        price       = price.slice( 1 );
+        negative    = '-';
+    }
 
-    return g + s + c;
+    while ( price.length < 6 )
+    {
+        price = '0' + price;
+    }
+
+    c = price.slice( price.length - 2 );
+    s = price.slice( price.length - 4, price.length - 2 );
+    g = parseInt( price.slice( 0, price.length - 4 ) );
+
+
+    var text = c + 'c';
+    if ( g !== 0 && parseInt( s ) !== 0 )
+    {
+        text = s + 's ' + text;
+    }
+    if ( g !== 0 )
+    {
+
+        text = g + 'g ' + text;
+    }
+    return negative + text;
 }
 
 
@@ -77,16 +99,15 @@ function buildWeaponList( weapons, sigilsByName )
         {
             if ( prop === 'min_sale_unit_price' )
             {
-                var diff = sigil[ 'min_sale_unit_price' ] - weapons[ i ][ 'min_sale_unit_price' ];
+                var diff    = sigil[ 'min_sale_unit_price' ] - weapons[ i ][ 'min_sale_unit_price' ];
+                var diffMin = sigil[ 'min_sale_unit_price' ] * userConfig.diffMin;
 
-                if ( diff > userConfig.diffMinEcto && weapons[ i ][ 'min_sale_unit_price' ] !== 0  )  
+                if ( diff > diffMin && weapons[ i ][ 'min_sale_unit_price' ] !== 0  )  
                 {
-                    var message = weapons[ i ].name + '\nSigil: ' + decToGSC( sigil[ 'min_sale_unit_price' ] ) 
-                                    + '   ||  Weapon: ' + decToGSC( weapons[ i ][ 'min_sale_unit_price' ] );
-                    if ( diff < userConfig.diffMin )
-                    {
-                        message += ' (sell ecto)';
-                    }
+                    var message = weapons[ i ].name + '\nSigil: ' + decToGSC( sigil[ 'min_sale_unit_price' ] ) + 
+                                    '   ||  Weapon: ' + decToGSC( weapons[ i ][ 'min_sale_unit_price' ] ) + '\n' + 
+                                    decToGSC( diff ) + ' net gain';
+
                     message += '\n';
 
                     console.log( message );
@@ -154,7 +175,7 @@ function getWeapons()
                 {
                     var item = obj[ i ];
 
-                    if ( item.rarity === 5 && item.name.indexOf( ' of ' ) !== -1 )
+                    if ( item.rarity === 5 && item.restriction_level >= 75 && item.name.indexOf( ' of ' ) !== -1 )
                     {
                         sigil = item.name.split( ' of ' )[ 1 ];
                         sigils.push( sigil );
@@ -188,15 +209,13 @@ function buildArmorList( armor, runesByName )
             if ( prop === 'min_sale_unit_price' )
             {
                 var diff = rune[ 'min_sale_unit_price' ] - armor[ i ][ 'min_sale_unit_price' ];
+                var diffMin = rune[ 'min_sale_unit_price' ] * userConfig.diffMin;
 
-                if ( diff > userConfig.diffMinEcto && armor[ i ][ 'min_sale_unit_price' ] !== 0  )  
+                if ( diff > diffMin && armor[ i ][ 'min_sale_unit_price' ] !== 0  )  
                 {
-                    var message = armor[ i ].name + '\nrune: ' + decToGSC( rune[ 'min_sale_unit_price' ] ) 
-                                + '   ||  Armor: ' + decToGSC( armor[ i ][ 'min_sale_unit_price' ] );
-                    if ( diff < userConfig.diffMin )
-                    {
-                        message += ' (sell ecto)';
-                    }
+                    var message = armor[ i ].name + '\nRune: ' + decToGSC( rune[ 'min_sale_unit_price' ] ) 
+                                + '   ||  Armor: ' + decToGSC( armor[ i ][ 'min_sale_unit_price' ] ) + '\n' + 
+                                    decToGSC( diff ) + ' net gain';
 
                     message += '\n';
                     console.log( message );
@@ -264,7 +283,7 @@ function getArmor()
                 {
                     var item = obj[ i ];
 
-                    if ( item.rarity === 5 && item.name.indexOf( ' of ' ) !== -1 )
+                    if ( item.rarity === 5 && item.restriction_level >= 75 && item.name.indexOf( ' of ' ) !== -1 )
                     {
                         rune = item.name.split( ' of ' )[ 1 ];
                         runes.push( rune );
