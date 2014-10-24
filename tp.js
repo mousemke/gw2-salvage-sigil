@@ -36,6 +36,12 @@ function decToGSC( price )
 
         text = g + 'g ' + text;
     }
+
+    while ( text[ 0 ] === '0' )
+    {
+        text = text.slice( 1 );
+    }
+
     return negative + text;
 }
 
